@@ -1,0 +1,3 @@
+data/gtfs_static/gtfs.zip
+data/gtfs_realtime/gtfsr_metro_train_vehicle_positions.openapi.json
+data/gtfs_realtime/gtfsr_metro_train_trip_updates.openapi.json
