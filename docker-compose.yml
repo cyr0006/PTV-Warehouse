@@ -1,0 +1,16 @@
+services:
+  postgress:
+    image: postgres:16
+    container_name: transit_db
+    retart: unless-stopped
+    environment:
+      POSTGRES_USER: transit_user
+      POSTGRES_PASSWORD: transit_password
+      POSTGRES_DB: transit_db
+    posts:
+      - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:
+
