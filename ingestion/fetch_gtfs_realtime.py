@@ -11,8 +11,10 @@ FEEDS = {
 }
 
 HEADERS = {
-    "Ocp-Apim-Subscription-Key": os.getenv("GTFS_SUBSCRIPTION_KEY")
+    "KeyID": os.getenv("GTFS_SUBSCRIPTION_KEY")
 }
+
+print(repr(os.getenv("GTFS_SUBSCRIPTION_KEY")))
 
 
 def fetch_feed(name: str, url: str) -> str:
