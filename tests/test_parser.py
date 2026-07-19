@@ -10,3 +10,4 @@ print(f"Number of entities: {len(feed.entity)}")
 
 # look at one entry
 print(feed.entity[0])
+print(len(feed.entity[0].trip_update.stop_time_update))

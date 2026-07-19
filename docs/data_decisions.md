@@ -1,0 +1,2 @@
+# A set of notes documenting and justifying design/cleaning decisions
+- 19/07/2026: 8% of stop_time_updates lack an arrival block, 1.6% lack departure. Nulled rather than defaulted to 0 to avoid corrupting delay averages. Likely cause: origin stops have no arrival; terminus/incomplete trips may lack departure
