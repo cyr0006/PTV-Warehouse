@@ -24,7 +24,7 @@ def load_trip_updates(file_path):
         feed.ParseFromString(f.read())
 
     poll_ts = datetime.now(timezone.utc)
-    date_id = int(poll_ts.strftime("%Y%m%d"))
+    date_id = poll_ts.date()
     ensure_dim_date(date_id, poll_ts)
 
     rows_inserted = 0
@@ -53,7 +53,7 @@ def load_trip_updates(file_path):
             cur.execute(
                 """INSERT INTO fact_trip_stop_delay
                    (trip_id, route_id, stop_id, date_id, stop_sequence,
-                    delay_seconds, predicted_arrival, poll_timestamp)
+                    delay_seconds, predicted_arrival_time, poll_timestamp)
                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
                 (trip_id, route_id, stop_id, date_id, stop_sequence,
                  arrival_delay,
