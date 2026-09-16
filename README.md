@@ -141,13 +141,34 @@ No package.json anywhere, no npm run dev;the HTM is just a plain static site: ma
 
 Since index.html fetches stops.geojson via a relative path, opening the HTML file directly (file://) will likely fail on the fetch due to CORS restrictions on file:// origins. It needs it to be served over http://.
 
-Quickest ways:
-Python:
-cd map && python -m http.server 8765
-Then open http://localhost:8765/
+1. Quickest ways:
+   Python:
+   cd map && python -m http.server 8765
+   Then open http://localhost:8765/
 
-Node, if you have npx available:
-cd map && npx serve -l 8765
+2. Node, if you have npx available:
+   cd map && npx serve -l 8765
+
+3.
+
+1) Start the local server (if it's not already running):
+   cd map
+   python -m http.server 8765
+   Leave that terminal open as closing it kills the server.
+
+2) Get a tunnel tool. Pick one:
+
+- Cloudflared (no signup needed): download from Cloudflare, or if you have it via a package manager already, skip ahead.
+
+3. Open a second terminal (leave the server terminal running) and start the tunnel:
+
+- Cloudflared: cloudflared tunnel --url http://localhost:8765
+
+4. Grab the public URL it prints
+
+5. Send that URL to viewrs. It'll route straight to your local server, so it only works while both terminals (server + tunnel) stay open on your machine.
+
+6. When done, Ctrl+C both terminals to shut down the tunnel and the server.
 
 Either works
 
