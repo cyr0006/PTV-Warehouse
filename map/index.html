@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>PTV Delay Map</title>
+  <link rel="stylesheet" href="https://js.arcgis.com/4.34/esri/themes/dark/main.css" />
+  <script src="https://js.arcgis.com/4.34/"></script>
+  <style>
+    html, body, #viewDiv { height: 100%; width: 100%; margin: 0; padding: 0; }
+  </style>
+</head>
+<body>
+  <div id="viewDiv"></div>
+  <script>
+    // TODO: replace with your ArcGIS Location Platform API key,
+    // restricted to this domain before deploying anywhere public.
+    const ARCGIS_API_KEY = "AAPTa1Qfdehj7RygyXTgVQSG-mA..Gi0j1EvKjnMZD6NnkYbpYcv62r8bqQveHM6fstsrNXDmJVJH6PQnJrsqbztbV_wxsMUmwZ7cIH8xvsMzcq-nK11QCEo2EAC64eDixutkbcA4eD7NfBmWmEmJsX7S-YM61PcLDU-2Gd997ZNAZk1R5-jCmTPauyi0A5-c3ZA5XzbjBGy5kyXf0wdgI87yXWfr_7BaQtbBf5abEoKXEoIvTgmyEldzbCoNvsEmQquILmz1HpJonUHNFI3sGBd-ug..AT1_M10aHgsB";
+
+    require([
+      "esri/config",
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/layers/GeoJSONLayer"
+    ], (esriConfig, Map, MapView, GeoJSONLayer) => {
+
+      esriConfig.apiKey = ARCGIS_API_KEY;
+
+      const renderer = {
+        type: "class-breaks",
+        field: "avg_delay",
+        classBreakInfos: [
+          { minValue: -Infinity, maxValue: 0,
+            symbol: { type: "simple-marker", color: "#2ecc71", size: 6, outline: null } },
+          { minValue: 0, maxValue: 60,
+            symbol: { type: "simple-marker", color: "#f1c40f", size: 8, outline: null } },
+          { minValue: 60, maxValue: 180,
+            symbol: { type: "simple-marker", color: "#e67e22", size: 10, outline: null } },
+          { minValue: 180, maxValue: 300,
+            symbol: { type: "simple-marker", color: "#e74c3c", size: 13, outline: null } },
+          { minValue: 300, maxValue: Infinity,
+            symbol: { type: "simple-marker", color: "#8e0000", size: 16, outline: null } }
+        ]
+      };
+
+      const popupTemplate = {
+        title: "{stop_name}",
+        content: [{
+          type: "fields",
+          fieldInfos: [
+            { fieldName: "avg_delay", label: "Avg delay (sec, current snapshot)" },
+            { fieldName: "worst_delay", label: "Worst delay (sec)" },
+            { fieldName: "observations", label: "Trips observed this poll" }
+          ]
+        }]
+      };
+
+      const stopsLayer = new GeoJSONLayer({
+        url: "./stops.geojson",
+        renderer: renderer,
+        popupTemplate: popupTemplate,
+        title: "Stop delay (current snapshot)"
+      });
+
+      const map = new Map({
+        basemap: "dark-gray-vector",
+        layers: [stopsLayer]
+      });
+
+      const view = new MapView({
+        container: "viewDiv",
+        map: map,
+        center: [144.96, -37.81],
+        zoom: 11
+      });
+    });
+  </script>
+</body>
+</html>
