@@ -2,7 +2,7 @@
 
 An end-to-end data pipeline that ingests live Melbourne Metro Train data from PTV's GTFS-Realtime feeds, cleans and models it into a Postgres star schema, and (soon) surfaces it through a dashboard.
 
-Built as a portfolio project by Aryan Cyrus. 
+Built as a portfolio project by Aryan Cyrus.
 
 ---
 
@@ -14,6 +14,7 @@ Built as a portfolio project by Aryan Cyrus.
 - **Poll interval:** every 3 minutes IF the scheduler is running. The feed itself only refreshes server-side every 30s, so faster polling just duplicates data without adding signal.
 
 ### Explicitly deferred (not forgotten)
+
 - **Vehicle Positions feed** — same ingestion pattern as Trip Updates, needs its own fact table (`vehicle_id`, `trip_id`, `lat`, `lon`, `timestamp`). Deferred to keep weekend scope achievable; planned as a near-term extension.
 - **Trams, buses, regional services** — out of scope. Metro Train only.
 
@@ -48,6 +49,7 @@ Built as a portfolio project by Aryan Cyrus.
 - `.env` holds `GTFS_SUBSCRIPTION_KEY`, `GTFS_TRIP_UPDATES_URL`, `GTFS_VEHICLE_POSITIONS_URL`.
 
 ### Auth NOTE
+
 The PTV Open Data portal's OpenAPI spec lists the auth header as `Ocp-Apim-Subscription-Key`. I tried this and it did NOT work. Correct header seems to be, corroborated via the portal's own curl example, is `KeyId`.
 
 ---
@@ -68,6 +70,7 @@ FeedMessage
 ```
 
 Confirmed from a live sample (176 entities):
+
 - `stop_time_update` count per entity ranges from **0 to 32** (avg 7.4). Some entities have zero stop_time_updates — parser must handle this without erroring.
 - Of 1,307 total stop_time_updates: **104 missing `arrival`**, **21 missing `departure`**. Not every update has both fields populated.
 - `delay` is relative (seconds vs scheduled), not an absolute time. Cross-referencing the actual scheduled time requires GTFS Static's `stop_times.txt` (not currently loaded — dims only use `routes.txt`/`stops.txt`).
@@ -84,35 +87,37 @@ Confirmed from a live sample (176 entities):
 
 GTFS Static folder reference (Melbourne DoT static zip is split by mode):
 
-| Folder | Mode |
-|---|---|
-| 1 | Regional Train |
-| **2** | **Metropolitan Train** ← used |
-| 3 | Metropolitan Tram |
-| 4 | Myki Bus (Metro + Regional Town Bus) |
-| 5 | Regional Coach |
-| 6 | Regional Bus |
-| 10 | Interstate Train |
-| 11 | SkyBus |
+| Folder | Mode                                 |
+| ------ | ------------------------------------ |
+| 1      | Regional Train                       |
+| **2**  | **Metropolitan Train** ← used        |
+| 3      | Metropolitan Tram                    |
+| 4      | Myki Bus (Metro + Regional Town Bus) |
+| 5      | Regional Coach                       |
+| 6      | Regional Bus                         |
+| 10     | Interstate Train                     |
+| 11     | SkyBus                               |
 
 ---
 
 ## Data cleaning decisions
-Please consult PTV-Warehouse\docs\data_decisions.md for details. 
+
+Please consult PTV-Warehouse\docs\data_decisions.md for details.
 
 ---
 
 ## Pipeline components
 
-| File | Purpose |
-|---|---|
-| `ingestion/fetch_gtfs_realtime.py` | Pulls Trip Updates feed, saves timestamped `.pb` to `raw/trip_updates/` |
-| `etl/load_statics_to_dims.py` | One-off loader: GTFS Static `routes.txt`/`stops.txt` → `dim_route`/`dim_stop` |
-| `etl/load_facts.py` | Parses latest `.pb`, applies null-handling rules, inserts into `fact_trip_stop_delay`; creates `dim_date` rows as needed |
-| `scheduler.py` | Runs fetch + load in a loop every 3 min. Long-running process (Ctrl+C to stop). No cron on Windows, so this replaces it. |
-| `warehouse/schema.sql` | DDL for the star schema |
+| File                               | Purpose                                                                                                                  |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `ingestion/fetch_gtfs_realtime.py` | Pulls Trip Updates feed, saves timestamped `.pb` to `raw/trip_updates/`                                                  |
+| `etl/load_statics_to_dims.py`      | One-off loader: GTFS Static `routes.txt`/`stops.txt` → `dim_route`/`dim_stop`                                            |
+| `etl/load_facts.py`                | Parses latest `.pb`, applies null-handling rules, inserts into `fact_trip_stop_delay`; creates `dim_date` rows as needed |
+| `scheduler.py`                     | Runs fetch + load in a loop every 3 min. Long-running process (Ctrl+C to stop). No cron on Windows, so this replaces it. |
+| `warehouse/schema.sql`             | DDL for the star schema                                                                                                  |
 
 ### Running the pipeline
+
 ```bash
 # One-time: load reference dimensions
 python etl/load_statics_to_dims.py
@@ -122,12 +127,31 @@ python scheduler.py
 ```
 
 Verify accumulation:
+
 ```sql
 SELECT poll_timestamp, COUNT(*)
 FROM fact_trip_stop_delay
 GROUP BY poll_timestamp
 ORDER BY poll_timestamp;
 ```
+
+### Running the ArcGIS map
+
+No package.json anywhere, no npm run dev;the HTM is just a plain static site: map/index.html + map/stops.geojson, no build step, no bundler.
+
+Since index.html fetches stops.geojson via a relative path, opening the HTML file directly (file://) will likely fail on the fetch due to CORS restrictions on file:// origins. It needs it to be served over http://.
+
+Quickest ways:
+Python:
+cd map && python -m http.server 8765
+Then open http://localhost:8765/
+
+Node, if you have npx available:
+cd map && npx serve -l 8765
+
+Either works
+
+In terminal: cd map && python -m http.server 8765
 
 ---
 
@@ -144,4 +168,5 @@ ORDER BY poll_timestamp;
 - [ ] Possible extension: Vehicle Positions feed + `fact_vehicle_position`
 
 ## Contributor(s)
+
 Aryan Cyrus - Aryan.m10@yahoo.com
