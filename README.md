@@ -15,8 +15,8 @@ Built as a portfolio project by Aryan Cyrus.
 
 ### Explicitly deferred (not forgotten)
 
-- **Vehicle Positions feed** — same ingestion pattern as Trip Updates, needs its own fact table (`vehicle_id`, `trip_id`, `lat`, `lon`, `timestamp`). Deferred to keep weekend scope achievable; planned as a near-term extension.
-- **Trams, buses, regional services** — out of scope. Metro Train only.
+- **Vehicle Positions feed**; same ingestion pattern as Trip Updates, needs its own fact table (`vehicle_id`, `trip_id`, `lat`, `lon`, `timestamp`). Deferred to keep weekend scope achievable; planned as a near-term extension.
+- **Trams, buses, regional services**; out of scope. Metro Train only.
 
 ---
 
@@ -25,19 +25,19 @@ Built as a portfolio project by Aryan Cyrus.
 ```
 [GTFS-Realtime feed: Trip Updates]
           │  polled every 3 min (scheduler.py)
-          ▼
+          V
 [ingestion/fetch_gtfs_realtime.py]  → raw .pb files → raw/trip_updates/
           │
-          ▼
+          V
 [etl/load_facts.py]  → parses protobuf, applies null-handling rules
           │
-          ▼
+          V
 [Postgres star schema]
-    dim_route, dim_stop, dim_date  ← loaded once from GTFS Static
-    fact_trip_stop_delay           ← appended every poll
+    dim_route, dim_stop, dim_date  <- loaded once from GTFS Static
+    fact_trip_stop_delay           <- appended every poll
           │
-          ▼
-[Dashboard — tool TBD, leaning Streamlit]
+          V
+[Dashboard; tool TBD, leaning Streamlit]
 ```
 
 ---
@@ -59,10 +59,10 @@ The PTV Open Data portal's OpenAPI spec lists the auth header as `Ocp-Apim-Subsc
 ```
 FeedMessage
 ├── header (feed timestamp, version)
-└── entity[]                       ← repeated, one per trip
+└── entity[]                       <- repeated, one per trip
     └── entity[i].trip_update
         ├── trip { trip_id, route_id, start_time, start_date }
-        └── stop_time_update[]     ← repeated, one per stop on that trip
+        └── stop_time_update[]     <- repeated, one per stop on that trip
             ├── stop_sequence
             ├── stop_id
             ├── arrival { delay, time }     (optional)
@@ -71,18 +71,18 @@ FeedMessage
 
 Confirmed from a live sample (176 entities):
 
-- `stop_time_update` count per entity ranges from **0 to 32** (avg 7.4). Some entities have zero stop_time_updates — parser must handle this without erroring.
+- `stop_time_update` count per entity ranges from **0 to 32** (avg 7.4). Some entities have zero stop_time_updates; parser must handle this without erroring.
 - Of 1,307 total stop_time_updates: **104 missing `arrival`**, **21 missing `departure`**. Not every update has both fields populated.
-- `delay` is relative (seconds vs scheduled), not an absolute time. Cross-referencing the actual scheduled time requires GTFS Static's `stop_times.txt` (not currently loaded — dims only use `routes.txt`/`stops.txt`).
+- `delay` is relative (seconds vs scheduled), not an absolute time. Cross-referencing the actual scheduled time requires GTFS Static's `stop_times.txt` (not currently loaded; dims only use `routes.txt`/`stops.txt`).
 - `stop_sequence` is the trip's internal stop order, not a universal stop ID. Stop identity is `stop_id`.
 
 ---
 
 ## Star schema
 
-- **`dim_route`** (`route_id` PK, `route_name`, `route_type`) — loaded from GTFS Static, folder `2` (Metropolitan Train).
-- **`dim_stop`** (`stop_id` PK, `stop_name`, `stop_lat`, `stop_lon`) — loaded from GTFS Static.
-- **`dim_date`** (`date_id` PK — `DATE` type, `day_of_week`, `is_weekend`) — populated on the fly by the fact loader as new dates appear.
+- **`dim_route`** (`route_id` PK, `route_name`, `route_type`); loaded from GTFS Static, folder `2` (Metropolitan Train).
+- **`dim_stop`** (`stop_id` PK, `stop_name`, `stop_lat`, `stop_lon`); loaded from GTFS Static.
+- **`dim_date`** (`date_id` PK; `DATE` type, `day_of_week`, `is_weekend`); populated on the fly by the fact loader as new dates appear.
 - **`fact_trip_stop_delay`** (`id`, `trip_id`, `route_id` FK, `stop_id` FK, `date_id` FK, `stop_sequence`, `delay_seconds`, `predicted_arrival`, `poll_timestamp`, `created_at`), grain is `(trip_id, stop_id, poll_timestamp)`. Append-only.
 
 GTFS Static folder reference (Melbourne DoT static zip is split by mode):
@@ -90,7 +90,7 @@ GTFS Static folder reference (Melbourne DoT static zip is split by mode):
 | Folder | Mode                                 |
 | ------ | ------------------------------------ |
 | 1      | Regional Train                       |
-| **2**  | **Metropolitan Train** ← used        |
+| **2**  | **Metropolitan Train** <- used       |
 | 3      | Metropolitan Tram                    |
 | 4      | Myki Bus (Metro + Regional Town Bus) |
 | 5      | Regional Coach                       |
